@@ -4,7 +4,8 @@
 
   /* ---------- Bundled data ---------- */
   var ASSETS = 'assets/', ICONS = ASSETS + 'icons/', WP = ASSETS + 'wallpapers/';
-  var CAP = 9, SCRIM_Y = 560;
+  var CAP = 9, SCRIM_Y = 560, DOCK_SCALE = 1.3;
+  function dockStageX(g, lx) { return g.x + g.w / 2 + DOCK_SCALE * (lx - g.w / 2); }
   var DOCK_MODES = { both: { tw: 288, th: 200, pitch: 296 }, text: { tw: 288, th: 104, pitch: 296 }, icons: { tw: 176, th: 144, pitch: 184 } };
   var GRID_ROW = 240, GRID_COL = 344, COLS = 5;
   var ED_ROW = 80, ED_SEP = 56, ED_VIEW = 752, STRIP_PITCH = 188;
@@ -1251,8 +1252,8 @@
   }
 
   function dockGeom(n) {
-    var m = DOCK_MODES[S.c.apps], vis = Math.max(1, Math.min(5, n)), shelfW = vis * m.pitch - 8, w = shelfW + 32;
-    var broad = S.geom === 'broad' && n > 5;
+    var m = DOCK_MODES[S.c.apps], vis = Math.max(1, Math.min(4, n)), shelfW = vis * m.pitch - 8, w = shelfW + 32;
+    var broad = false;
     if (n < 0) { w = 912; shelfW = 880; }
     else if (broad) { w = 1728; shelfW = 1696; }
     return { x: Math.round((1920 - w) / 2), y: 908 - m.th - 32, h: m.th + 32, w: w, shelf: shelfW, vis: vis, broad: broad, empty: n < 0, tw: m.tw, th: m.th, pitch: m.pitch };
@@ -1312,11 +1313,13 @@
     dock.style.left = g.x + 'px'; dock.style.top = g.y + 'px'; dock.style.width = g.w + 'px'; dock.style.height = g.h + 'px';
     dock.style.setProperty('--tile-w', g.tw + 'px'); dock.style.setProperty('--tile-h', g.th + 'px'); dock.style.setProperty('--dock-h', g.h + 'px');
     dock.style.setProperty('--nudge-top', ((g.th - 48) / 2) + 'px');
-    dockAnchorCenter = g.x + 16 + anchor * g.pitch - off + g.tw / 2;
+    dockAnchorCenter = dockStageX(g, 16 + anchor * g.pitch - off + g.tw / 2);
     IMG.mat.style.left = (-g.x) + 'px'; IMG.mat.style.top = (-g.y) + 'px';
-    IMG.mat.style.transformOrigin = '960px ' + (g.y + g.h / 2) + 'px';
+    IMG.mat.style.transformOrigin = (g.x + g.w / 2) + 'px ' + (g.y + g.h) + 'px';
+    IMG.mat.style.transform = 'scale(' + (1 / DOCK_SCALE) + ')';
     matScrim.style.left = (-g.x) + 'px'; matScrim.style.top = (SCRIM_Y - g.y) + 'px';
-    matScrim.style.transformOrigin = '960px ' + (g.y + g.h / 2 - SCRIM_Y) + 'px';
+    matScrim.style.transformOrigin = (g.x + g.w / 2) + 'px ' + (g.y + g.h - SCRIM_Y) + 'px';
+    matScrim.style.transform = 'scale(' + (1 / DOCK_SCALE) + ')';
     shelf.style.width = g.shelf + 'px';
     shelf.className = 'shelf' + (g.broad && off > 0 ? ' fade-l' : '') + (g.broad && off + g.shelf < n * g.pitch - 8 ? ' fade-r' : '');
 
@@ -1342,12 +1345,12 @@
     plate.className = 'plate' + (!n || empty || hs.zone === null ? '' : hs.lifted ? ' on-lift' : tileFocus ? ' on-focus' : tileSel ? ' on-sel' : '');
     plate.style.transform = 'translate3d(' + (anchor * g.pitch) + 'px,0,0)';
 
-    cueL.style.left = (g.x - 72) + 'px'; cueR.style.left = (g.x + g.w + 24) + 'px';
-    cueL.style.top = cueR.style.top = (g.y + g.h / 2 - 24) + 'px';
+    cueL.style.left = (dockStageX(g, 0) - 72) + 'px'; cueR.style.left = (dockStageX(g, g.w) + 24) + 'px';
+    cueL.style.top = cueR.style.top = (g.y + g.h - DOCK_SCALE * g.h / 2 - 24) + 'px';
     cueL.className = 'cue' + (!g.broad && !empty && scroll.first > 0 ? ' is-on' : '');
     cueR.className = 'cue' + (!g.broad && !empty && scroll.first + g.vis < n ? ' is-on' : '');
 
-    ax = g.x + 16 + anchor * g.pitch - off;
+    ax = dockStageX(g, 16 + anchor * g.pitch - off + g.tw / 2) - g.tw / 2;
     if (hs.mode === 'arrange' && !hs.lifted && (hs.zone === 'tiles' || hs.zone === 'act') && focusItem && focusItem.kind !== 'add') {
       s = hs.arr.slots[anchor];
       label = (s.removed ? 'Restore ' : 'Remove ') + app(s.id).name; width = actionWidth(label);

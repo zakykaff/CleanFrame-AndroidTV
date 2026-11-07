@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initSoundPool();
+        // Navigation tick sound removed
         initWebView();
     }
 
@@ -371,9 +371,6 @@ public class MainActivity extends Activity {
             else if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE) jsKey = "back";
 
             if (jsKey != null) {
-                if ("left".equals(jsKey) || "right".equals(jsKey) || "up".equals(jsKey) || "down".equals(jsKey)) {
-                    playNavSound();
-                }
                 final String k = jsKey;
                 if (webView != null) {
                     webView.post(() -> {
